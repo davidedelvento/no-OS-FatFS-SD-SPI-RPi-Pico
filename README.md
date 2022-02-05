@@ -1,3 +1,10 @@
+# purpose of this fork
+
+Experimenting with options to capture as much data as possible of the Pico's ADC, as described https://raspberrypi.stackexchange.com/questions/135890/
+for the end goal of builind a hybrid piano as discussed here https://github.com/davidedelvento/Mybrid
+This is as an alternative to https://github.com/davidedelvento/pico-webserver which is better than other options but not ideal
+
+
 # no-OS-FatFS-SD-SPI-RPi-Pico
 
 ## Simple library for SD Cards on the Pico
