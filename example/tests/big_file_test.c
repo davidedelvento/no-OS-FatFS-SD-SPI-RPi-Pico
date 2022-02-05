@@ -62,24 +62,27 @@ static DWORD adc_3_8() {
     return lfsr;
 }
 
-static DWORD adc_1_8() {
+static DWORD adc_1_12() {
     static DWORD lfsr;
-    static uint8_t fake_adc = 0;
+    static uint16_t fake_adc_a = 0xAAA;
+    static uint16_t fake_adc_b = 0xEEE;
     static absolute_time_t start_time = 0;
     if (start_time == 0) {
 	start_time = get_absolute_time();
     }
 
-    fake_adc++; // need to actually get it
+    uint16_t data1 = fake_adc_a++ % 4096; // need to actually get it
+    uint16_t data2 = fake_adc_b++ % 4096; // need to actually get it
 
     uint32_t us_time = absolute_time_diff_us(start_time, get_absolute_time());
 
-    lfsr = fake_adc + ((us_time & 255) << 8);
+    lfsr = ((us_time & 255) << 24) + (data1 << 12) + data2 ;
 
     return lfsr;
 }
 
 #define size 0x01000000 // 16 MiB -- about 30 seconds of data
+#define size 0x00100000 // 16 MiB -- about 3 seconds of data
 
 static bool create_big_file(const char *const pathname, uint8_t adc,
                             uint8_t bit) {
@@ -125,7 +128,8 @@ static bool create_big_file(const char *const pathname, uint8_t adc,
     for (i = 0; i < size / bufsz; ++i) {
         size_t n;
         for (n = 0; n < bufsz / sizeof(DWORD); n++) {
-		buff[n] = adc_3_8(0);
+		//buff[n] = adc_3_8();
+		buff[n] = adc_1_12();
 	}
         lItems = fwrite(buff, bufsz, 1, pxFile);
         if (lItems < 1)
