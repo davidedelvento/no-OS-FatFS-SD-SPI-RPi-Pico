@@ -21,6 +21,8 @@ specific language governing permissions and limitations under the License.
 #include <string.h>
 //
 #include "pico/stdlib.h"
+#include "hardware/adc.h"
+
 //
 //#include "ff_headers.h"
 #include "ff_stdio.h"
@@ -45,34 +47,31 @@ typedef unsigned int UINT;
 
 static DWORD adc_3_8() {
     static DWORD lfsr;
-    static uint8_t fake_adc1 = 0, fake_adc2 = 0, fake_adc3 = 0;
     static absolute_time_t start_time = 0;
     if (start_time == 0) {
 	start_time = get_absolute_time();
     }
 
-    fake_adc1 +=1;
-    fake_adc2 -=1;
-    fake_adc3 +=0x10;
+    uint16_t adc1 = (adc_read() & 0x0FFF) >> 4;  // assumes the right round robin settings are in place
+    uint16_t adc2 = (adc_read() & 0x0FFF) >> 4;
+    uint16_t adc3 = (adc_read() & 0x0FFF) >> 4;
 
     uint32_t us_time = absolute_time_diff_us(start_time, get_absolute_time());
 
-    lfsr = fake_adc1 + (fake_adc2 << 8) + (fake_adc3 << 16) + ((us_time & 255) << 24);
+    lfsr = adc1 + (adc2 << 8) + (adc3 << 16) + ((us_time & 255) << 24);
 
     return lfsr;
 }
 
 static DWORD adc_1_12() {
     static DWORD lfsr;
-    static uint16_t fake_adc_a = 0xAAA;
-    static uint16_t fake_adc_b = 0xEEE;
     static absolute_time_t start_time = 0;
     if (start_time == 0) {
 	start_time = get_absolute_time();
     }
 
-    uint16_t data1 = fake_adc_a++ % 4096; // need to actually get it
-    uint16_t data2 = fake_adc_b++ % 4096; // need to actually get it
+    uint16_t data1 = adc_read() & 0x0FFF;  // assumes the right round robin settings are in place
+    uint16_t data2 = adc_read() & 0x0FFF;
 
     uint32_t us_time = absolute_time_diff_us(start_time, get_absolute_time());
 
@@ -82,7 +81,6 @@ static DWORD adc_1_12() {
 }
 
 #define size 0x01000000 // 16 MiB -- about 30 seconds of data
-#define size 0x00100000 // 16 MiB -- about 3 seconds of data
 
 static bool create_big_file(const char *const pathname, uint8_t adc) {
     int32_t lItems;
@@ -90,8 +88,10 @@ static bool create_big_file(const char *const pathname, uint8_t adc) {
     DWORD (*fun_ptr)();
     if (adc == 1) {
 	fun_ptr = &adc_1_12;
+	adc_set_round_robin(2);
     } else {
 	fun_ptr = &adc_3_8;
+	adc_set_round_robin(7);
     }
 
 
