@@ -64,8 +64,8 @@ static DWORD pn(/* Pseudo random number generator */
 }
 
 // Create a file of size "size" bytes filled with random data seeded with "seed"
-static bool create_big_file(const char *const pathname, size_t size,
-                            unsigned seed) {
+static bool create_big_file(const char *const pathname, uint8_t adc,
+                            uint8_t bit) {
     int32_t lItems;
     FF_FILE *pxFile;
 
@@ -74,8 +74,6 @@ static bool create_big_file(const char *const pathname, size_t size,
     assert(0 == size % bufsz);
     DWORD *buff = malloc(bufsz);
     assert(buff);
-
-    pn(seed);  // See pseudo-random number generator
 
     printf("Writing...\n");
     absolute_time_t xStart = get_absolute_time();
@@ -124,61 +122,8 @@ static bool create_big_file(const char *const pathname, size_t size,
     return true;
 }
 
-// Read a file of size "size" bytes filled with random data seeded with "seed"
-// and verify the data
-static void check_big_file(const char *const pathname, size_t size,
-                           uint32_t seed) {
-    int32_t lItems;
-    FF_FILE *pxFile;
-
-    //    DWORD buff[FF_MAX_SS];  /* Working buffer (4 sector in size) */
-    //	assert(0 == size % sizeof(buff));
-    size_t bufsz = size < BUFFSZ ? size : BUFFSZ;
-    assert(0 == size % bufsz);
-    DWORD *buff = malloc(bufsz);
-    assert(buff);
-
-    pn(seed);
-
-    /* Open the file, creating the file if it does not already exist. */
-    pxFile = fopen(pathname, "r");
-    if (!pxFile)
-        printf("fopen(%s): %s (%d)\n", pathname, strerror(errno), -errno);
-    assert(pxFile);
-
-    printf("Reading...\n");
-    absolute_time_t xStart = get_absolute_time();
-
-    size_t i;
-    for (i = 0; i < size / bufsz; ++i) {
-        lItems = fread(buff, bufsz, 1, pxFile);
-        if (lItems < 1)
-            printf("fread(%s): %s (%d)\n", pathname, strerror(errno), -errno);
-        assert(lItems == 1);
-
-        /* Check the buffer is filled with the expected data. */
-        size_t n;
-        for (n = 0; n < bufsz / sizeof(DWORD); n++) {
-            unsigned int expected = pn(0);
-            unsigned int val = buff[n];
-            if (val != expected)
-                printf("Data mismatch at dword %u: expected=0x%8x val=0x%8x\n",
-                       (i * sizeof(buff)) + n, expected, val);
-        }
-    }
-    free(buff);
-    /* Close the file. */
-    ff_fclose(pxFile);
-
-    int64_t elapsed_us = absolute_time_diff_us(xStart, get_absolute_time());
-    float elapsed = elapsed_us / 1E6;
-    printf("Elapsed seconds %.3g\n", elapsed);
-    printf("Transfer rate %.3g KiB/s\n", (double)size / elapsed / 1024);
-}
-
-void big_file_test(const char *const pathname, size_t size, uint32_t seed) {
-    if (create_big_file(pathname, size, seed)) 
-        check_big_file(pathname, size, seed);
+void big_file_test(const char *const pathname, uint8_t adc, uint8_t bits) {
+    create_big_file(pathname, adc, bits);
 }
 
 /* [] END OF FILE */
