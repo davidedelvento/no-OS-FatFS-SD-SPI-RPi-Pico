@@ -63,7 +63,8 @@ static DWORD pn(/* Pseudo random number generator */
     return lfsr;
 }
 
-// Create a file of size "size" bytes filled with random data seeded with "seed"
+#define size 0x01000000 // 16 MiB -- about 30 seconds of data
+
 static bool create_big_file(const char *const pathname, uint8_t adc,
                             uint8_t bit) {
     int32_t lItems;
