@@ -43,23 +43,39 @@ specific language governing permissions and limitations under the License.
 typedef uint32_t DWORD;
 typedef unsigned int UINT;
 
-// Borrowed from http://elm-chan.org/fsw/ff/res/app4.c
-static DWORD pn(/* Pseudo random number generator */
-                DWORD pns /* 0:Initialize, !0:Read */  // Is that right? -- CK3
-) {
+static DWORD adc_3_8() {
     static DWORD lfsr;
-    UINT n;
+    static uint8_t fake_adc1 = 0, fake_adc2 = 0, fake_adc3 = 0;
+    static absolute_time_t start_time = 0;
+    if (start_time == 0) {
+	start_time = get_absolute_time();
+    }
 
-    if (pns) {
-        lfsr = pns;
-        for (n = 0; n < 32; n++) pn(0);
+    fake_adc1 +=1;
+    fake_adc2 -=1;
+    fake_adc3 +=0x10;
+
+    uint32_t us_time = absolute_time_diff_us(start_time, get_absolute_time());
+
+    lfsr = fake_adc1 + (fake_adc2 << 8) + (fake_adc3 << 16) + ((us_time & 255) << 24);
+
+    return lfsr;
+}
+
+static DWORD adc_1_8() {
+    static DWORD lfsr;
+    static uint8_t fake_adc = 0;
+    static absolute_time_t start_time = 0;
+    if (start_time == 0) {
+	start_time = get_absolute_time();
     }
-    if (lfsr & 1) {
-        lfsr >>= 1;
-        lfsr ^= 0x80200003;
-    } else {
-        lfsr >>= 1;
-    }
+
+    fake_adc++; // need to actually get it
+
+    uint32_t us_time = absolute_time_diff_us(start_time, get_absolute_time());
+
+    lfsr = fake_adc + ((us_time & 255) << 8);
+
     return lfsr;
 }
 
@@ -104,9 +120,13 @@ static bool create_big_file(const char *const pathname, uint8_t adc,
     assert(pxFile);
 
     size_t i;
+
+    // have to use CLI arguments
     for (i = 0; i < size / bufsz; ++i) {
         size_t n;
-        for (n = 0; n < bufsz / sizeof(DWORD); n++) buff[n] = pn(0);
+        for (n = 0; n < bufsz / sizeof(DWORD); n++) {
+		buff[n] = adc_3_8(0);
+	}
         lItems = fwrite(buff, bufsz, 1, pxFile);
         if (lItems < 1)
             printf("fwrite(%s): %s (%d)\n", pathname, strerror(errno), errno);
