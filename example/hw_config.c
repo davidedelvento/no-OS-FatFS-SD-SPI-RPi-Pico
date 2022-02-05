@@ -52,8 +52,10 @@ static spi_t spis[] = {  // One for each SPI.
         //.baud_rate = 12500 * 1000,  // The limitation here is SPI slew rate.
 	//
         //.baud_rate = 6250 * 1000,  // The limitation here is SPI slew rate.
-        .baud_rate = 25 * 1000 * 1000, // Actual frequency: 20833333. Has
-        // worked for me with SanDisk.
+        .baud_rate = 50 * 1000 * 1000, // If I read the RP2040 datasheet correctly
+	                               // it supports up to 62.5 M baud
+				       // The card I am using seems to deal ok with these
+				       // rate (SandDisk 2GB micro USB)
 
         // Following attributes are dynamically assigned
         .dma_isr = spi0_dma_isr,
