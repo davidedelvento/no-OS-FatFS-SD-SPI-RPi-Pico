@@ -23,8 +23,7 @@ extern "C" {
     int lliot(size_t pnum);
     void ls(const char *dir);
     void simple();
-    void big_file_test(const char *const pathname, size_t size,
-                            uint32_t seed);
+    void big_file_test(const char *const pathname, uint8_t adc);
     void vCreateAndVerifyExampleFiles(const char *pcMountPath);
     void vStdioWithCWDTest(const char *pcMountPath);
     bool process_logger();
@@ -291,19 +290,13 @@ static void run_big_file_test() {
         printf("Missing argument\n");
         return;
     }
-    const char *pcSize = strtok(NULL, " ");
-    if (!pcSize) {
-        printf("Missing argument\n");
+    const char *adc_str = strtok(NULL, " ");
+    if (!adc_str) {
+        printf("Have to specify 1 or 3 ADCs\n");
         return;
     }
-    size_t size = strtoul(pcSize, 0, 0);
-    const char *pcSeed = strtok(NULL, " ");
-    if (!pcSeed) {
-        printf("Missing argument\n");
-        return;
-    }
-    uint32_t seed = atoi(pcSeed);
-    big_file_test(pcPathName, size, seed);
+    uint32_t adc = atoi(adc_str);
+    big_file_test(pcPathName, adc);
 }
 static void del_node(const char *path) {
     FILINFO fno;
@@ -402,12 +395,8 @@ static cmd_def_t cmds[] = {
     {"ls", run_ls, "ls:\n  List directory"},
     {"cat", run_cat, "cat <filename>:\n  Type file contents"},
     {"simple", simple, "simple:\n  Run simple FS tests"},
-    {"big_file_test", run_big_file_test,
-     "big_file_test <pathname> <size in bytes> <seed>:\n"
-     " Writes random data to file <pathname>.\n"
-     " <size in bytes> must be multiple of 512.\n"
-     "\te.g.: big_file_test bf 1048576 1\n"
-     "\tor: big_file_test big3G-3 0xC0000000 3"},
+    {"dump_adc", run_big_file_test,
+     "dump_adc <pathname> <1 or 3 channels>:\n"},
     {"cdef", run_cdef,
      "cdef:\n  Create Disk and Example Files\n"
      "  Expects card to be already formatted and mounted"},

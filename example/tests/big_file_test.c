@@ -84,10 +84,16 @@ static DWORD adc_1_12() {
 #define size 0x01000000 // 16 MiB -- about 30 seconds of data
 #define size 0x00100000 // 16 MiB -- about 3 seconds of data
 
-static bool create_big_file(const char *const pathname, uint8_t adc,
-                            uint8_t bit) {
+static bool create_big_file(const char *const pathname, uint8_t adc) {
     int32_t lItems;
     FF_FILE *pxFile;
+    DWORD (*fun_ptr)();
+    if (adc == 1) {
+	fun_ptr = &adc_1_12;
+    } else {
+	fun_ptr = &adc_3_8;
+    }
+
 
     //    DWORD buff[FF_MAX_SS];  /* Working buffer (4 sector in size) */
     size_t bufsz = size < BUFFSZ ? size : BUFFSZ;
@@ -124,12 +130,10 @@ static bool create_big_file(const char *const pathname, uint8_t adc,
 
     size_t i;
 
-    // have to use CLI arguments
     for (i = 0; i < size / bufsz; ++i) {
         size_t n;
         for (n = 0; n < bufsz / sizeof(DWORD); n++) {
-		//buff[n] = adc_3_8();
-		buff[n] = adc_1_12();
+		buff[n] = fun_ptr();
 	}
         lItems = fwrite(buff, bufsz, 1, pxFile);
         if (lItems < 1)
@@ -147,8 +151,8 @@ static bool create_big_file(const char *const pathname, uint8_t adc,
     return true;
 }
 
-void big_file_test(const char *const pathname, uint8_t adc, uint8_t bits) {
-    create_big_file(pathname, adc, bits);
+void big_file_test(const char *const pathname, uint8_t adc) {
+    create_big_file(pathname, adc);
 }
 
 /* [] END OF FILE */
