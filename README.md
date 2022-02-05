@@ -4,6 +4,9 @@ Experimenting with options to capture as much data as possible of the Pico's ADC
 for the end goal of builind a hybrid piano as discussed here https://github.com/davidedelvento/Mybrid
 This is as an alternative to https://github.com/davidedelvento/pico-webserver which is better than other options but not ideal
 
+With this code (random or incremental data, no ADC yet) I have been able to achieve regularsly transfer speeds of more than `500 KiB/s` and occasionally
+even around `750 KiB/s`. Obviously it depends on the SD card used, this was with a SanDisk 2GB microSD
+
 
 # no-OS-FatFS-SD-SPI-RPi-Pico
 
